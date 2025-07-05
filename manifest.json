@@ -1,9 +1,11 @@
 {
-  "id": "image-download",
-  "name": "Image Download",
-  "description": "Download all linked images in the vault and relink them locally",
-  "version": "1.0.0",
-  "minAppVersion": "0.15.0",
-  "author": "Your Name",
-  "isDesktopOnly": false
+	"id": "sample-plugin",
+	"name": "Sample Plugin",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Demonstrates some of the capabilities of the Obsidian API.",
+	"author": "Obsidian",
+	"authorUrl": "https://obsidian.md",
+	"fundingUrl": "https://obsidian.md/pricing",
+	"isDesktopOnly": false
 }
