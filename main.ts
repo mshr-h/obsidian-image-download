@@ -36,14 +36,16 @@ export default class ImageDownloadPlugin extends Plugin {
     let success = 0;
     const errors: string[] = [];
     const concurrency = 5;
-    let index = 0;
+    const fileQueue = [...files];
     const worker = async () => {
-      while (index < files.length) {
-        const file = files[index++];
-        const res = await this.processFile(file);
-        total += res.total;
-        success += res.success;
-        errors.push(...res.errors);
+      while (fileQueue.length > 0) {
+        const file = fileQueue.shift();
+        if (file) {
+          const res = await this.processFile(file);
+          total += res.total;
+          success += res.success;
+          errors.push(...res.errors);
+        }
       }
     };
     const workers = Array(Math.min(concurrency, files.length)).fill(null).map(worker);
