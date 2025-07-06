@@ -1,6 +1,6 @@
 import { App, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 import { SettingsManager, DEFAULT_SETTINGS, ImageDownloadSettings } from './settings';
-import { findImageLinks, buildMarkdownLink, saveImage } from './imageUtils';
+import { findImageLinks, buildMarkdownLink, saveImage, isYoutubeLink } from './imageUtils';
 
 export default class ImageDownloadPlugin extends Plugin {
   settingsManager!: SettingsManager;
@@ -36,16 +36,14 @@ export default class ImageDownloadPlugin extends Plugin {
     let success = 0;
     const errors: string[] = [];
     const concurrency = 5;
-    const fileQueue = [...files];
+    let index = 0;
     const worker = async () => {
-      while (fileQueue.length > 0) {
-        const file = fileQueue.shift();
-        if (file) {
-          const res = await this.processFile(file);
-          total += res.total;
-          success += res.success;
-          errors.push(...res.errors);
-        }
+      while (index < files.length) {
+        const file = files[index++];
+        const res = await this.processFile(file);
+        total += res.total;
+        success += res.success;
+        errors.push(...res.errors);
       }
     };
     const workers = Array(Math.min(concurrency, files.length)).fill(null).map(worker);
@@ -67,6 +65,7 @@ export default class ImageDownloadPlugin extends Plugin {
     for (let i = links.length - 1; i >= 0; i--) {
       const link = links[i];
       if (link.path.startsWith(this.settings.downloadDir + '/')) continue;
+      if (isYoutubeLink(link.path)) continue;
       try {
         const filename = await saveImage(this.app, link.path, file, this.settings.downloadDir);
         const newLink = buildMarkdownLink(link, `${this.settings.downloadDir}/${filename}`);

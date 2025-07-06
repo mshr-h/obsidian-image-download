@@ -1,5 +1,5 @@
 jest.mock('obsidian', () => ({}), { virtual: true });
-import { findImageLinks, buildMarkdownLink } from '../imageUtils';
+import { findImageLinks, buildMarkdownLink, isYoutubeLink } from '../imageUtils';
 
 test('parse markdown image', () => {
   const text = '![alt](http://example.com/a.png "title")';
@@ -22,4 +22,10 @@ test('build markdown link', () => {
   const link = { start: 0, end: 0, path: 'x', alt: 'a', title: 't' };
   const result = buildMarkdownLink(link, 'folder/img.png');
   expect(result).toBe('![a](folder/img.png "t")');
+});
+
+test('isYoutubeLink', () => {
+  expect(isYoutubeLink('https://youtube.com/watch?v=123')).toBe(true);
+  expect(isYoutubeLink('https://www.youtube.com/image.png')).toBe(true);
+  expect(isYoutubeLink('https://example.com/image.png')).toBe(false);
 });

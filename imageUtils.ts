@@ -1,5 +1,6 @@
 import { App, normalizePath, requestUrl, TFile } from 'obsidian';
 import * as path from 'path';
+import { createHash } from 'crypto';
 
 export interface ImageLink {
   start: number;
@@ -42,21 +43,14 @@ export function buildMarkdownLink(link: ImageLink, newPath: string): string {
   return result;
 }
 
-export async function getUniqueFilename(app: App, dir: string, base: string): Promise<string> {
-  const adapter = app.vault.adapter;
-  let candidate = normalizePath(path.posix.join(dir, base));
-  if (!(await adapter.exists(candidate))) return candidate;
-  const parsed = path.parse(base);
-  let i = 1;
-  while (await adapter.exists(normalizePath(path.posix.join(dir, `${parsed.name} (${i})${parsed.ext}`)))) {
-    i++;
-  }
-  return normalizePath(path.posix.join(dir, `${parsed.name} (${i})${parsed.ext}`));
+// youtubeリンクか判定
+export function isYoutubeLink(url: string): boolean {
+  return /^https?:\/\/(www\.)?youtube\.com/i.test(url);
 }
 
 export async function saveImage(app: App, src: string, srcFile: TFile, dir: string): Promise<string> {
-  const base = path.basename(src);
-  const destPath = await getUniqueFilename(app, dir, base);
+  const clean = src.split(/[?#]/)[0];
+  const ext = path.extname(clean);
   let data: ArrayBuffer;
   if (/^https?:\/\//i.test(src)) {
     const resp = await requestUrl({ url: src });
@@ -71,6 +65,11 @@ export async function saveImage(app: App, src: string, srcFile: TFile, dir: stri
     }
     data = await app.vault.adapter.readBinary(resolved);
   }
-  await app.vault.createBinary(destPath, data);
-  return path.basename(destPath);
+  const hash = createHash('sha256').update(Buffer.from(data)).digest('hex');
+  const filename = `${hash}${ext}`;
+  const destPath = normalizePath(path.posix.join(dir, filename));
+  if (!(await app.vault.adapter.exists(destPath))) {
+    await app.vault.createBinary(destPath, data);
+  }
+  return filename;
 }
